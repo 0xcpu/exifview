@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXIF Viewer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>EXIF Viewer</h1>
+      <p class="subtitle">Select images to view their metadata</p>
+    </header>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <span>Scanning for images...</span>
+    </div>
+
+    <div id="no-images" class="message hidden">
+      <p>No images found on this page.</p>
+      <p class="hint">Try right-clicking on an image and selecting "View EXIF Data"</p>
+    </div>
+
+    <div id="image-grid" class="image-grid hidden"></div>
+
+    <div id="selection-info" class="selection-info hidden">
+      <span id="selected-count">0 selected</span>
+    </div>
+
+    <div id="actions" class="actions hidden">
+      <button id="select-all" class="btn btn-secondary">Select All</button>
+      <button id="process-btn" class="btn btn-primary" disabled>View EXIF</button>
+    </div>
+
+    <div id="processing" class="processing hidden">
+      <div class="spinner"></div>
+      <span>Extracting EXIF data...</span>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "name": "exifview",
+  "version": "1.0.0",
+  "description": "Chrome extension for viewing EXIF, IPTC, XMP, and ICC metadata from images",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && npm run bundle && npm run cleanup && npm run copy-static",
+    "bundle": "esbuild chrome/service-worker.js --bundle --outfile=chrome/service-worker.js --format=esm --allow-overwrite",
+    "cleanup": "rm -rf chrome/lib chrome/types",
+    "watch": "tsc --watch",
+    "copy-static": "cp -r static/* chrome/",
+    "clean": "rm -rf chrome/*"
+  },
+  "keywords": [
+    "exif",
+    "iptc",
+    "xmp",
+    "icc",
+    "metadata",
+    "chrome-extension"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "exifreader": "^4.36.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.33",
+    "esbuild": "^0.27.2",
+    "typescript": "^5.9.3"
+  }
+}
