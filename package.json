@@ -4,12 +4,18 @@
   "description": "Chrome extension for viewing EXIF, IPTC, XMP, and ICC metadata from images",
   "type": "module",
   "scripts": {
-    "build": "tsc && npm run bundle && npm run cleanup && npm run copy-static",
-    "bundle": "esbuild chrome/service-worker.js --bundle --outfile=chrome/service-worker.js --format=esm --allow-overwrite",
-    "cleanup": "rm -rf chrome/lib chrome/types",
+    "build": "npm run build:chrome && npm run build:firefox",
+    "build:chrome": "npm run compile && npm run bundle:chrome && npm run manifest:chrome && npm run copy-static:chrome",
+    "build:firefox": "npm run compile && npm run bundle:firefox && npm run manifest:firefox && npm run copy-static:firefox",
+    "compile": "tsc",
+    "bundle:chrome": "esbuild chrome/service-worker.js chrome/popup.js chrome/results.js --bundle --outdir=build/chrome --format=esm",
+    "bundle:firefox": "esbuild chrome/service-worker.js chrome/popup.js chrome/results.js --bundle --outdir=build/firefox --format=esm",
+    "manifest:chrome": "node scripts/build-manifest.js chrome",
+    "manifest:firefox": "node scripts/build-manifest.js firefox",
+    "copy-static:chrome": "cp static/*.html static/*.css build/chrome/ && cp -r static/icons build/chrome/",
+    "copy-static:firefox": "cp static/*.html static/*.css build/firefox/ && cp -r static/icons build/firefox/",
     "watch": "tsc --watch",
-    "copy-static": "cp -r static/* chrome/",
-    "clean": "rm -rf chrome/*"
+    "clean": "rm -rf chrome/* build/*"
   },
   "keywords": [
     "exif",

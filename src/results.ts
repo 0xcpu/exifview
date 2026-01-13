@@ -1,7 +1,10 @@
 /**
  * EXIF Viewer Results Page
+ *
+ * Cross-browser compatible results display for Chrome, Edge, and Firefox.
  */
 
+import { api } from "./lib/browser-api.js";
 import type { ImageResult, ImageMetadata, ExifMetadata } from "./types/metadata.js";
 
 const LABEL_MAPPINGS: Record<string, string> = {
@@ -50,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
     return;
   }
 
-  const data = await chrome.storage.local.get("exifResults");
+  const data = await api.storage.local.get("exifResults");
   const results = data.exifResults as ImageResult[] | undefined;
 
   if (!results || results.length === 0) {
@@ -70,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
     resultsContainer.appendChild(card);
   });
 
-  chrome.storage.local.remove("exifResults");
+  api.storage.local.remove("exifResults");
 });
 
 function createResultCard(result: ImageResult, index: number): HTMLDivElement {

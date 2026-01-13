@@ -1,7 +1,10 @@
 /**
  * EXIF Viewer Popup Script
+ *
+ * Cross-browser compatible popup for Chrome, Edge, and Firefox.
  */
 
+import { api } from "./lib/browser-api.js";
 import type {
   PageImage,
   ImageResult,
@@ -63,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
   let images: PageImage[] = [];
   const selectedImages = new Set<number>();
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await api.tabs.query({ active: true, currentWindow: true });
 
   if (!tab?.id) {
     showError("Unable to access current tab.");
@@ -73,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
   const tabId = tab.id;
 
   try {
-    const response = (await chrome.runtime.sendMessage({
+    const response = (await api.runtime.sendMessage({
       action: "getImages",
       tabId,
     })) as GetImagesResponse;
@@ -179,7 +182,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
     processing.classList.remove("hidden");
 
     try {
-      const response = (await chrome.runtime.sendMessage({
+      const response = (await api.runtime.sendMessage({
         action: "processImages",
         images: selectedUrls,
         tabId,
@@ -198,7 +201,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
       });
 
       if (results.length === 1 && hasResults) {
-        await chrome.storage.local.set({ exifResults: results });
+        await api.storage.local.set({ exifResults: results });
 
         const meta = results[0].metadata as ImageMetadata;
         const summary: string[] = [];
@@ -207,7 +210,7 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
         if (meta.iptc?.Title) summary.push(meta.iptc.Title);
         if (meta.icc?.ProfileName) summary.push(meta.icc.ProfileName);
 
-        chrome.notifications.create({
+        api.notifications.create({
           type: "basic",
           iconUrl: "icons/icon-48.png",
           title: "Image Metadata Found",
@@ -215,11 +218,11 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
             summary.length > 0 ? summary.join(" | ") : "Click to view details",
         });
 
-        chrome.tabs.create({ url: chrome.runtime.getURL("results.html") });
+        api.tabs.create({ url: api.runtime.getURL("results.html") });
         window.close();
       } else if (results.length >= 2 || (results.length === 1 && !hasResults)) {
-        await chrome.storage.local.set({ exifResults: results });
-        chrome.tabs.create({ url: chrome.runtime.getURL("results.html") });
+        await api.storage.local.set({ exifResults: results });
+        api.tabs.create({ url: api.runtime.getURL("results.html") });
         window.close();
       }
     } catch (error) {

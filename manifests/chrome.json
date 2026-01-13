@@ -1,0 +1,3 @@
+{
+  "$comment": "Chrome-specific manifest overrides. Currently empty as Chrome uses base manifest as-is. Add Chrome-specific fields here if needed in the future."
+}

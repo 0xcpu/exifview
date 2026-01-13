@@ -1,19 +1,23 @@
 /**
- * EXIF Viewer Chrome Extension Service Worker
+ * EXIF Viewer Extension Service Worker
+ *
+ * Cross-browser compatible service worker for Chrome, Edge, and Firefox.
+ * Uses unified browser API for compatibility.
  */
 
+import { api } from "./lib/browser-api.js";
 import { parseImageMetadata } from "./lib/metadata-parser.js";
 import type { ImageMetadata, ImageResult, PageImage } from "./types/metadata.js";
 
-chrome.runtime.onInstalled.addListener((): void => {
-  chrome.contextMenus.create({
+api.runtime.onInstalled.addListener((): void => {
+  api.contextMenus.create({
     id: "viewExif",
     title: "View Image Metadata",
     contexts: ["image"],
   });
 });
 
-chrome.contextMenus.onClicked.addListener(
+api.contextMenus.onClicked.addListener(
   async (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab): Promise<void> => {
     if (info.menuItemId === "viewExif" && info.srcUrl) {
       try {
@@ -21,7 +25,7 @@ chrome.contextMenus.onClicked.addListener(
         await displayResults([{ url: info.srcUrl, metadata, error: null }], tab);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        chrome.notifications.create({
+        api.notifications.create({
           type: "basic",
           iconUrl: "icons/icon-48.png",
           title: "Metadata Viewer",
@@ -57,7 +61,7 @@ interface GetImagesResponse {
   error?: string;
 }
 
-chrome.runtime.onMessage.addListener(
+api.runtime.onMessage.addListener(
   (
     message: ExtensionMessage,
     _sender: chrome.runtime.MessageSender,
@@ -82,7 +86,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 async function getImagesFromTab(tabId: number): Promise<PageImage[]> {
-  const results = await chrome.scripting.executeScript({
+  const results = await api.scripting.executeScript({
     target: { tabId },
     func: (): PageImage[] => {
       const images = document.querySelectorAll("img");
@@ -160,9 +164,12 @@ async function displayResults(
           ? summary.slice(0, 3).join(" | ")
           : "Metadata found. Click to view details.";
 
-      await chrome.storage.local.set({ exifResults: results });
+      await api.storage.local.set({ exifResults: results });
 
-      chrome.notifications.create(
+      // Browser-specific behavior note:
+      // Firefox: Notification buttons are supported but may have reduced interactivity
+      // Chrome/Edge: Full notification button support with interactive callbacks
+      api.notifications.create(
         {
           type: "basic",
           iconUrl: "icons/icon-48.png",
@@ -174,23 +181,23 @@ async function displayResults(
           const buttonListener = (id: string, buttonIndex: number): void => {
             if (id === notificationId && buttonIndex === 0) {
               openResultsTab();
-              chrome.notifications.onButtonClicked.removeListener(buttonListener);
+              api.notifications.onButtonClicked.removeListener(buttonListener);
             }
           };
 
           const clickListener = (id: string): void => {
             if (id === notificationId) {
               openResultsTab();
-              chrome.notifications.onClicked.removeListener(clickListener);
+              api.notifications.onClicked.removeListener(clickListener);
             }
           };
 
-          chrome.notifications.onButtonClicked.addListener(buttonListener);
-          chrome.notifications.onClicked.addListener(clickListener);
+          api.notifications.onButtonClicked.addListener(buttonListener);
+          api.notifications.onClicked.addListener(clickListener);
         }
       );
     } else {
-      chrome.notifications.create({
+      api.notifications.create({
         type: "basic",
         iconUrl: "icons/icon-48.png",
         title: "Metadata Viewer",
@@ -198,13 +205,13 @@ async function displayResults(
       });
     }
   } else {
-    await chrome.storage.local.set({ exifResults: results });
+    await api.storage.local.set({ exifResults: results });
     openResultsTab();
   }
 }
 
 function openResultsTab(): void {
-  chrome.tabs.create({
-    url: chrome.runtime.getURL("results.html"),
+  api.tabs.create({
+    url: api.runtime.getURL("results.html"),
   });
 }
