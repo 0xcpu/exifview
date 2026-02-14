@@ -14,6 +14,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { deepMerge } from "./deep-merge.js";
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -35,40 +36,6 @@ const buildDir = path.join(rootDir, "build", browser);
 // Ensure build directory exists
 if (!fs.existsSync(buildDir)) {
   fs.mkdirSync(buildDir, { recursive: true });
-}
-
-/**
- * Deep merge two objects
- * @param {object} target - Target object
- * @param {object} source - Source object to merge into target
- * @returns {object} Merged object
- */
-function deepMerge(target, source) {
-  const output = { ...target };
-
-  // Special fields that should be completely replaced, not merged
-  const replaceFields = ["background"];
-
-  for (const key in source) {
-    if (Object.hasOwn(source, key)) {
-      // Replace field entirely if in replaceFields list
-      if (replaceFields.includes(key)) {
-        output[key] = source[key];
-      } else if (
-        source[key] &&
-        typeof source[key] === "object" &&
-        !Array.isArray(source[key])
-      ) {
-        // Recursively merge nested objects
-        output[key] = deepMerge(output[key] || {}, source[key]);
-      } else {
-        // Overwrite or add property
-        output[key] = source[key];
-      }
-    }
-  }
-
-  return output;
 }
 
 try {

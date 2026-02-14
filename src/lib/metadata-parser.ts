@@ -218,10 +218,6 @@ function extractXmp(tags: ExpandedTags): XmpMetadata | null {
   result.Lens = getXmpValue(xmp["aux:Lens"]) || getXmpValue(xmp.Lens);
   result.SerialNumber = getXmpValue(xmp["aux:SerialNumber"]) || getXmpValue(xmp.SerialNumber);
 
-  if (xmp._raw && typeof xmp._raw === "string") {
-    result._raw = xmp._raw;
-  }
-
   return cleanObject(result);
 }
 
@@ -250,6 +246,7 @@ function extractIcc(tags: ExpandedTags): IccMetadata | null {
   result.ProfileVersion = getStringValue(icc["Profile Version"]) || getStringValue(icc.profileVersion);
   result.RenderingIntent = getStringValue(icc["Rendering Intent"]) || getStringValue(icc.renderingIntent);
   result.Platform = getStringValue(icc["Primary Platform"]) || getStringValue(icc.platform);
+  result.PCS = getStringValue(icc["Connection Space"]) || getStringValue(icc.pcs);
   result.CMMType = getStringValue(icc["CMM Type"]) || getStringValue(icc.cmmType);
   result.CreationDate = getStringValue(icc["Profile Date/Time"]) || getStringValue(icc.creationDate);
 

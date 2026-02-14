@@ -9,6 +9,9 @@ node_modules/
 chrome/
 build/
 
+# Reference docs
+context/
+
 # OS files
 .DS_Store
 Thumbs.db

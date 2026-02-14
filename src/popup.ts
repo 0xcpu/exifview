@@ -7,21 +7,10 @@
 import { api } from "./lib/browser-api.js";
 import type {
   PageImage,
-  ImageResult,
   ImageMetadata,
+  GetImagesResponse,
+  ProcessImagesResponse,
 } from "./types/metadata.js";
-
-interface GetImagesResponse {
-  success: boolean;
-  images?: PageImage[];
-  error?: string;
-}
-
-interface ProcessImagesResponse {
-  success: boolean;
-  results?: ImageResult[];
-  error?: string;
-}
 
 function getElement<T extends HTMLElement>(id: string): T | null {
   return document.getElementById(id) as T | null;
@@ -182,6 +171,13 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
     processing.classList.remove("hidden");
 
     try {
+      const granted = await api.permissions.request({ origins: ["<all_urls>"] });
+      if (!granted) {
+        processing.classList.add("hidden");
+        showError("Host permission is required to read image metadata.");
+        return;
+      }
+
       const response = (await api.runtime.sendMessage({
         action: "processImages",
         images: selectedUrls,

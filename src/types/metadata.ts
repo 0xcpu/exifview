@@ -75,7 +75,6 @@ export interface XmpMetadata {
   Model?: string;
   Lens?: string;
   SerialNumber?: string;
-  _raw?: string;
   [key: string]: string | string[] | number | undefined;
 }
 
@@ -113,4 +112,16 @@ export interface PageImage {
   alt: string;
   width: number;
   height: number;
+}
+
+export interface GetImagesResponse {
+  success: boolean;
+  images?: PageImage[];
+  error?: string;
+}
+
+export interface ProcessImagesResponse {
+  success: boolean;
+  results?: ImageResult[];
+  error?: string;
 }

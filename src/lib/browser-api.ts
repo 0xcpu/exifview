@@ -43,4 +43,7 @@ export const api = {
 
   /** Script injection API */
   scripting: browserAPI.scripting,
+
+  /** Permissions API for optional permission requests */
+  permissions: browserAPI.permissions,
 };
