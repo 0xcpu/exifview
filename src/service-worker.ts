@@ -7,7 +7,7 @@
 
 import { api } from "./lib/browser-api.js";
 import { parseImageMetadata } from "./lib/metadata-parser.js";
-import type { ImageMetadata, ImageResult, PageImage } from "./types/metadata.js";
+import type { ImageMetadata, ImageResult, PageImage, GetImagesResponse, ProcessImagesResponse } from "./types/metadata.js";
 
 api.runtime.onInstalled.addListener((): void => {
   api.contextMenus.create({
@@ -48,18 +48,6 @@ interface GetImagesMessage {
 }
 
 type ExtensionMessage = ProcessImagesMessage | GetImagesMessage;
-
-interface ProcessImagesResponse {
-  success: boolean;
-  results?: ImageResult[];
-  error?: string;
-}
-
-interface GetImagesResponse {
-  success: boolean;
-  images?: PageImage[];
-  error?: string;
-}
 
 api.runtime.onMessage.addListener(
   (
@@ -107,19 +95,20 @@ async function getImagesFromTab(tabId: number): Promise<PageImage[]> {
 }
 
 async function processMultipleImages(imageUrls: string[]): Promise<ImageResult[]> {
-  const results: ImageResult[] = [];
-
-  for (const url of imageUrls) {
-    try {
+  const settled = await Promise.allSettled(
+    imageUrls.map(async (url): Promise<ImageResult> => {
       const metadata = await fetchAndParseMetadata(url);
-      results.push({ url, metadata, error: null });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      results.push({ url, metadata: null, error: errorMessage });
-    }
-  }
+      return { url, metadata, error: null };
+    })
+  );
 
-  return results;
+  return settled.map((result, i) => {
+    if (result.status === "fulfilled") {
+      return result.value;
+    }
+    const error = result.reason instanceof Error ? result.reason.message : "Unknown error";
+    return { url: imageUrls[i], metadata: null, error };
+  });
 }
 
 async function fetchAndParseMetadata(imageUrl: string): Promise<ImageMetadata> {
@@ -178,22 +167,35 @@ async function displayResults(
           buttons: [{ title: "View Details" }],
         },
         (notificationId) => {
+          const cleanup = (): void => {
+            api.notifications.onButtonClicked.removeListener(buttonListener);
+            api.notifications.onClicked.removeListener(clickListener);
+            api.notifications.onClosed.removeListener(closedListener);
+          };
+
           const buttonListener = (id: string, buttonIndex: number): void => {
             if (id === notificationId && buttonIndex === 0) {
               openResultsTab();
-              api.notifications.onButtonClicked.removeListener(buttonListener);
+              cleanup();
             }
           };
 
           const clickListener = (id: string): void => {
             if (id === notificationId) {
               openResultsTab();
-              api.notifications.onClicked.removeListener(clickListener);
+              cleanup();
+            }
+          };
+
+          const closedListener = (id: string): void => {
+            if (id === notificationId) {
+              cleanup();
             }
           };
 
           api.notifications.onButtonClicked.addListener(buttonListener);
           api.notifications.onClicked.addListener(clickListener);
+          api.notifications.onClosed.addListener(closedListener);
         }
       );
     } else {
