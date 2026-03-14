@@ -5,6 +5,7 @@
  */
 
 import { api } from "./lib/browser-api.js";
+import { getElement } from "./lib/dom-utils.js";
 import type { ImageResult, ImageMetadata, ExifMetadata } from "./types/metadata.js";
 
 const LABEL_MAPPINGS: Record<string, string> = {
@@ -44,9 +45,9 @@ const LABEL_MAPPINGS: Record<string, string> = {
 type MetadataType = "exif" | "iptc" | "xmp" | "icc";
 
 document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
-  const resultsContainer = document.getElementById("results");
-  const summaryEl = document.getElementById("summary");
-  const noResults = document.getElementById("no-results");
+  const resultsContainer = getElement<HTMLElement>("results");
+  const summaryEl = getElement<HTMLParagraphElement>("summary");
+  const noResults = getElement<HTMLDivElement>("no-results");
 
   if (!resultsContainer || !summaryEl || !noResults) {
     console.error("Required DOM elements not found");

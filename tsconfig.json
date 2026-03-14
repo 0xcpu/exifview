@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "types": ["chrome"],
-    "outDir": "./chrome",
+    "outDir": "./compiled",
     "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
@@ -18,7 +18,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
-    "sourceMap": true,
+    // Source maps disabled to reduce build output size; esbuild handles
+    // source maps separately if needed during development.
+    "sourceMap": false,
     "resolveJsonModule": true
   },
   "include": ["src/**/*"],

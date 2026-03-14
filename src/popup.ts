@@ -5,16 +5,13 @@
  */
 
 import { api } from "./lib/browser-api.js";
+import { getElement } from "./lib/dom-utils.js";
 import type {
   PageImage,
   ImageMetadata,
   GetImagesResponse,
   ProcessImagesResponse,
 } from "./types/metadata.js";
-
-function getElement<T extends HTMLElement>(id: string): T | null {
-  return document.getElementById(id) as T | null;
-}
 
 document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
   const loading = getElement<HTMLDivElement>("loading");
@@ -174,7 +171,10 @@ document.addEventListener("DOMContentLoaded", async (): Promise<void> => {
       const granted = await api.permissions.request({ origins: ["<all_urls>"] });
       if (!granted) {
         processing.classList.add("hidden");
-        showError("Host permission is required to read image metadata.");
+        showError(
+          "Host permission is required to read image metadata. " +
+          "If permissions were not requested, grant them via your browser's extension settings."
+        );
         return;
       }
 
