@@ -7,6 +7,7 @@
 
 import { api } from "./lib/browser-api.js";
 import { parseImageMetadata } from "./lib/metadata-parser.js";
+import { batchProcess } from "./lib/batch-process.js";
 import type { ImageMetadata, ImageResult, PageImage, GetImagesResponse, ProcessImagesResponse } from "./types/metadata.js";
 
 api.runtime.onInstalled.addListener((): void => {
@@ -94,20 +95,26 @@ async function getImagesFromTab(tabId: number): Promise<PageImage[]> {
   return results[0]?.result || [];
 }
 
+// Batching limits parallel fetches to avoid exhausting service worker memory
+// and potential rate-limiting from image hosts.
+const CONCURRENCY_LIMIT = 5;
+
 async function processMultipleImages(imageUrls: string[]): Promise<ImageResult[]> {
-  const settled = await Promise.allSettled(
-    imageUrls.map(async (url): Promise<ImageResult> => {
+  const settled = await batchProcess(
+    imageUrls,
+    async (url): Promise<ImageResult> => {
       const metadata = await fetchAndParseMetadata(url);
       return { url, metadata, error: null };
-    })
+    },
+    CONCURRENCY_LIMIT
   );
 
-  return settled.map((result, i) => {
+  return settled.map((result, index) => {
     if (result.status === "fulfilled") {
       return result.value;
     }
     const error = result.reason instanceof Error ? result.reason.message : "Unknown error";
-    return { url: imageUrls[i], metadata: null, error };
+    return { url: imageUrls[index], metadata: null, error };
   });
 }
 

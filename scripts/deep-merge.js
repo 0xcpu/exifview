@@ -16,7 +16,7 @@ export function deepMerge(target, source) {
     if (Object.hasOwn(source, key)) {
       // Replace field entirely if in replaceFields list
       if (replaceFields.includes(key)) {
-        output[key] = source[key];
+        output[key] = structuredClone(source[key]);
       } else if (
         source[key] &&
         typeof source[key] === "object" &&
@@ -24,8 +24,11 @@ export function deepMerge(target, source) {
       ) {
         // Recursively merge nested objects
         output[key] = deepMerge(output[key] || {}, source[key]);
+      } else if (Array.isArray(source[key])) {
+        // Deep clone arrays to prevent mutation leakage
+        output[key] = structuredClone(source[key]);
       } else {
-        // Overwrite or add property
+        // Overwrite or add primitive property
         output[key] = source[key];
       }
     }

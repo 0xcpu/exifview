@@ -98,6 +98,7 @@ export interface ImageMetadata {
   iptc: IptcMetadata | null;
   xmp: XmpMetadata | null;
   icc: IccMetadata | null;
+  /** Internal error message when metadata extraction fails. Excluded from clipboard copy. */
   _error: string | null;
 }
 

@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { deepMerge } from "../scripts/deep-merge.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const manifestsDir = path.join(__dirname, "..", "manifests");
 
 describe("deepMerge", () => {
   it("merges flat objects", () => {
@@ -36,6 +43,23 @@ describe("deepMerge", () => {
     expect(target).toEqual(original);
   });
 
+  it("does not mutate the source object", () => {
+    const target = { background: { service_worker: "sw.js" } };
+    const source = { background: { scripts: ["sw.js"] } };
+    const originalSource = JSON.parse(JSON.stringify(source));
+    const result = deepMerge(target, source);
+    result.background.scripts.push("extra.js");
+    expect(source).toEqual(originalSource);
+  });
+
+  it("deep clones arrays to prevent mutation leakage", () => {
+    const target = {};
+    const source = { permissions: ["a", "b"] };
+    const result = deepMerge(target, source);
+    result.permissions.push("c");
+    expect(source.permissions).toEqual(["a", "b"]);
+  });
+
   it("handles empty source", () => {
     const target = { a: 1 };
     expect(deepMerge(target, {})).toEqual({ a: 1 });
@@ -52,5 +76,47 @@ describe("deepMerge", () => {
     expect(deepMerge(target, source)).toEqual({
       icons: { "16": "icon-16.png", "32": "icon-32.png" },
     });
+  });
+});
+
+describe("manifest build integration", () => {
+  function buildManifest(browser) {
+    const base = JSON.parse(fs.readFileSync(path.join(manifestsDir, "base.json"), "utf8"));
+    const overrides = JSON.parse(fs.readFileSync(path.join(manifestsDir, `${browser}.json`), "utf8"));
+    const merged = deepMerge(base, overrides);
+    delete merged.$comment;
+    return merged;
+  }
+
+  it("removes $comment from chrome manifest", () => {
+    const manifest = buildManifest("chrome");
+    expect(manifest.$comment).toBeUndefined();
+  });
+
+  it("chrome manifest has service_worker background", () => {
+    const manifest = buildManifest("chrome");
+    expect(manifest.background.service_worker).toBe("service-worker.js");
+  });
+
+  it("firefox manifest has scripts background instead of service_worker", () => {
+    const manifest = buildManifest("firefox");
+    expect(manifest.background.scripts).toEqual(["service-worker.js"]);
+    expect(manifest.background.service_worker).toBeUndefined();
+  });
+
+  it("firefox manifest has gecko settings", () => {
+    const manifest = buildManifest("firefox");
+    expect(manifest.browser_specific_settings.gecko.id).toBeDefined();
+  });
+
+  it("both manifests have required fields", () => {
+    for (const browser of ["chrome", "firefox"]) {
+      const manifest = buildManifest(browser);
+      expect(manifest.manifest_version).toBe(3);
+      expect(manifest.name).toBeDefined();
+      expect(manifest.version).toBeDefined();
+      expect(manifest.permissions).toContain("activeTab");
+      expect(manifest.action).toBeDefined();
+    }
   });
 });
